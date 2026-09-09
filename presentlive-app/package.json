@@ -1,5 +1,5 @@
 {
-  "name": "todo-app",
+  "name": "PresentLive - Interactive Presenation Platform",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,8 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@langchain/core": "^1.2.9",
+    "@langchain/openai": "^1.5.11",
+    "bootstrap": "^5.3.8",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.3"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",

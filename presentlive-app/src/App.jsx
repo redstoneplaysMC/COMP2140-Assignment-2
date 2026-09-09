@@ -9,7 +9,24 @@ function App() {
 
   return (
     <>
-      <section id="center">
+      {/* Forhapentligvis kan disse bruker Bootstrap API. */}
+      <section className="container text-center py-5">
+        <div className="mb-4">
+          <h1 className="display-4">Get started</h1>
+          <p className="lead">
+            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setCount((count) => count + 1)}
+        >
+          Count is {count}
+        </button>
+      </section>
+      {/* <section id="center">
         <div className="hero">
           <img src={heroImg} className="base" width="170" height="179" alt="" />
           <img src={reactLogo} className="framework" alt="React logo" />
@@ -28,7 +45,7 @@ function App() {
         >
           Count is {count}
         </button>
-      </section>
+      </section> */}
 
       <div className="ticks"></div>
 
