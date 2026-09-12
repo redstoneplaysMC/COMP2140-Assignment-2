@@ -950,31 +950,6 @@ function writeFodpToOutput(inputPath, outputFolder, modelFlag=false){
     }
 }
 
-// const testFodp = `<?xml version="1.0" encoding="UTF-8"?>
-// <office:document
-//     xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
-//     xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
-//     xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
-//     xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
-//     office:mimetype="application/vnd.oasis.opendocument.presentation">
-//     <office:body>
-//         <office:presentation>
-//             <draw:page draw:name="Test">
-//                 <draw:frame>
-//                     <draw:text-box>
-//                         <text:p>Gradescope Test String</text:p>
-//                     </draw:text-box>
-//                 </draw:frame>
-//             </draw:page>
-//         </office:presentation>
-//     </office:body>
-// </office:document>`;
-
-// fs.mkdirSync("./outputdecks", { recursive: true });
-// fs.writeFileSync("./outputdecks/test.fodp", testFodp);
-
-// Gradescope does not think this is a FODP file. Must be broken.
-
 if (require.main === module) {
 
     try {
