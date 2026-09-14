@@ -1,6 +1,6 @@
 const fs = require("fs")
 const path = require("path");
-const { parsePresentMD } = require("./presentMDparser");
+const { parsePresentMD } = require("./presentMDparser.cjs");
 const { TextDecoder } = require("util");
 
 /**
@@ -132,7 +132,8 @@ function createIntermediateJSON(parsed) {
             name: null,
             layout: "",
             blocks: [],
-            slide_index: 0
+            slide_index: 0,
+            isPollType: false
         };
     }
     function unsupportedValue(WarnText) { // Replacement for unsupported value
@@ -158,9 +159,9 @@ function createIntermediateJSON(parsed) {
                     case "layout":
                         currentSlide.layout = block.value
                         break; 
-                    default:
-                        // [Unsupported: --- Omitted]
-                        currentSlide.blocks.push(unsupportedValue("Unknown directive"));
+                    case "poll":
+                        currentSlide.isPollType = true
+                        currentSlide.blocks.push(block);
                         break;
                 }
                 break;
@@ -950,6 +951,19 @@ function writeFodpToOutput(inputPath, outputFolder, modelFlag=false){
     }
 }
 
+// Function to convert intermediate json into the slide format.
+function createSlidesFormat(intermediateJSON, presentationId) {
+    return intermediateJSON.slides.map((slide, index) => {
+        return {
+            presentation_id: presentationId,
+            body: slide,
+            slide_position: String(index + 1),
+            is_poll: false,
+            slide_id: index + 1
+        };
+    });
+}
+
 if (require.main === module) {
 
     try {
@@ -988,7 +1002,8 @@ module.exports = {
     parsePresentMD,
     createIntermediateJSON,
     createFodpMain,
-    writeFodpToOutput
+    writeFodpToOutput,
+    createSlidesFormat
 };
 
 // node .\deckconverter.js ./inputdecks outputdecks --model

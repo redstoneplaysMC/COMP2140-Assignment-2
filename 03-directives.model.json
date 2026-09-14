@@ -1,0 +1,530 @@
+{
+  "title": "Riverside Library — Board Pack",
+  "author": "A. Student",
+  "backgroundColor": "#1e3a5f",
+  "color": "#ffffff",
+  "layout": "title",
+  "slide_count": 13,
+  "slides": [
+    {
+      "name": "Riverside Library",
+      "layout": "title",
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 1,
+          "runs": [
+            {
+              "type": "text",
+              "value": "Riverside Library"
+            }
+          ]
+        },
+        {
+          "kind": "paragraph",
+          "runs": [
+            {
+              "type": "text",
+              "value": "Quarterly report to the board"
+            }
+          ]
+        },
+        {
+          "kind": "note",
+          "text": "The frontmatter above configures the deck. Every comment below configures"
+        },
+        {
+          "kind": "note",
+          "text": "one slide, and only the slide it sits on."
+        },
+        {
+          "kind": "note",
+          "text": "The deck's layout is `title`, so a slide that says nothing about its layout"
+        },
+        {
+          "kind": "note",
+          "text": "is a title slide. This one says nothing."
+        }
+      ],
+      "slide_index": 0
+    },
+    {
+      "name": "Agenda",
+      "layout": "default",
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 1,
+          "runs": [
+            {
+              "type": "text",
+              "value": "Agenda"
+            }
+          ]
+        },
+        {
+          "kind": "list",
+          "ordered": true,
+          "items": [
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Riverside Library"
+                }
+              ],
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Programme"
+                }
+              ],
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Where we are"
+                }
+              ],
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "A slide that overrides the deck"
+                }
+              ],
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Back to the deck background"
+                }
+              ],
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Risks"
+                }
+              ],
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "The register"
+                }
+              ],
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Layout is not decided by position"
+                }
+              ],
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Colour is deck-wide only"
+                }
+              ],
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Delivery"
+                }
+              ],
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Handover"
+                }
+              ],
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Close"
+                }
+              ],
+              "items": []
+            }
+          ]
+        }
+      ],
+      "slide_index": 1
+    },
+    {
+      "name": "Programme",
+      "layout": "section",
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 1,
+          "runs": [
+            {
+              "type": "text",
+              "value": "Programme"
+            }
+          ]
+        }
+      ],
+      "slide_index": 2
+    },
+    {
+      "name": "Where we are",
+      "layout": "default",
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 2,
+          "runs": [
+            {
+              "type": "text",
+              "value": "Where we are"
+            }
+          ]
+        },
+        {
+          "kind": "paragraph",
+          "runs": [
+            {
+              "type": "text",
+              "value": "This slide states its layout and nothing else, so it takes the deck's background and the deck's colour."
+            }
+          ]
+        },
+        {
+          "kind": "list",
+          "ordered": false,
+          "items": [
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Structure complete"
+                }
+              ],
+              "ordered": false,
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Weathertight"
+                }
+              ],
+              "ordered": false,
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Fit-out under way"
+                }
+              ],
+              "ordered": false,
+              "items": []
+            }
+          ]
+        }
+      ],
+      "slide_index": 3
+    },
+    {
+      "name": "A slide that overrides the deck",
+      "layout": "default",
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 2,
+          "runs": [
+            {
+              "type": "text",
+              "value": "A slide that overrides the deck"
+            }
+          ]
+        },
+        {
+          "kind": "paragraph",
+          "runs": [
+            {
+              "type": "text",
+              "value": "Two directives sit on this slide. The background here is stated on the slide. The next slide says nothing about its background and returns to the deck's."
+            }
+          ]
+        },
+        {
+          "kind": "note",
+          "text": "Scope is decided by where a directive sits, not by what it says."
+        }
+      ],
+      "slide_index": 4,
+      "backgroundColor": "#ffcc00"
+    },
+    {
+      "name": "Back to the deck background",
+      "layout": "default",
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 2,
+          "runs": [
+            {
+              "type": "text",
+              "value": "Back to the deck background"
+            }
+          ]
+        },
+        {
+          "kind": "paragraph",
+          "runs": [
+            {
+              "type": "text",
+              "value": "The override applied to that slide and no other."
+            }
+          ]
+        }
+      ],
+      "slide_index": 5
+    },
+    {
+      "name": "Risks",
+      "layout": "section",
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 1,
+          "runs": [
+            {
+              "type": "text",
+              "value": "Risks"
+            }
+          ]
+        }
+      ],
+      "slide_index": 6
+    },
+    {
+      "name": "The register",
+      "layout": "default",
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 2,
+          "runs": [
+            {
+              "type": "text",
+              "value": "The register"
+            }
+          ]
+        },
+        {
+          "kind": "list",
+          "ordered": true,
+          "items": [
+            {
+              "runs": [
+                {
+                  "type": "strike",
+                  "runs": [
+                    {
+                      "type": "text",
+                      "value": "Specialist shelving supplier"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "value": " resolved 12 March"
+                }
+              ],
+              "ordered": true,
+              "items": []
+            },
+            {
+              "runs": [
+                {
+                  "type": "text",
+                  "value": "Community consultation on opening hours"
+                }
+              ],
+              "ordered": true,
+              "items": []
+            }
+          ]
+        }
+      ],
+      "slide_index": 7
+    },
+    {
+      "name": "Layout is not decided by position",
+      "layout": "title",
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 2,
+          "runs": [
+            {
+              "type": "text",
+              "value": "Layout is not decided by position"
+            }
+          ]
+        },
+        {
+          "kind": "paragraph",
+          "runs": [
+            {
+              "type": "text",
+              "value": "A title layout can appear anywhere in the deck. There is no rule that the first slide is special — this slide states no layout at all, so it takes the deck's, which is title."
+            }
+          ]
+        }
+      ],
+      "slide_index": 8
+    },
+    {
+      "name": "Colour is deck-wide only",
+      "layout": "default",
+      "blocks": [
+        {
+          "kind": "unsupported",
+          "text": "Unsupported: Unknown directive omitted"
+        },
+        {
+          "kind": "heading",
+          "level": 2,
+          "runs": [
+            {
+              "type": "text",
+              "value": "Colour is deck-wide only"
+            }
+          ]
+        },
+        {
+          "kind": "paragraph",
+          "runs": [
+            {
+              "type": "text",
+              "value": "The output format has no slide-level text colour, so the comment above cannot be honoured. It must be reported and ignored, and this slide keeps the deck's white text."
+            }
+          ]
+        },
+        {
+          "kind": "note",
+          "text": "A directive in the wrong scope is not the same as an unknown directive."
+        },
+        {
+          "kind": "note",
+          "text": "The key is known; the scope is wrong."
+        }
+      ],
+      "slide_index": 9
+    },
+    {
+      "name": "Delivery",
+      "layout": "section",
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 1,
+          "runs": [
+            {
+              "type": "text",
+              "value": "Delivery"
+            }
+          ]
+        }
+      ],
+      "slide_index": 10
+    },
+    {
+      "name": "Handover",
+      "layout": "default",
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 2,
+          "runs": [
+            {
+              "type": "text",
+              "value": "Handover"
+            }
+          ]
+        },
+        {
+          "kind": "paragraph",
+          "runs": [
+            {
+              "type": "text",
+              "value": "Practical completion, then four weeks of commissioning, then two weeks to move the collection in."
+            }
+          ]
+        },
+        {
+          "kind": "quote",
+          "runs": [
+            {
+              "type": "text",
+              "value": "Public opening is still targeted for July."
+            }
+          ]
+        }
+      ],
+      "slide_index": 11
+    },
+    {
+      "name": "Close",
+      "layout": "default",
+      "blocks": [
+        {
+          "kind": "heading",
+          "level": 2,
+          "runs": [
+            {
+              "type": "text",
+              "value": "Close"
+            }
+          ]
+        },
+        {
+          "kind": "paragraph",
+          "runs": [
+            {
+              "type": "text",
+              "value": "Questions, and then the site visit."
+            }
+          ]
+        }
+      ],
+      "slide_index": 13
+    }
+  ]
+}

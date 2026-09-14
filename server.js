@@ -1,11 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-
 import { createRequire } from "module";
-
 const require = createRequire(import.meta.url);
+
 const { parsePresentMD } = require("./presentMDparser.cjs");
+const { createIntermediateJSON, createFodpMain, createSlidesFormat } = require("./deckconverter.cjs");
 
 dotenv.config();
 
@@ -23,6 +23,39 @@ app.post("/parse-md", (req, res) => {
     try {
         const parsed = parsePresentMD(req.body.markdown);
         res.json(parsed);
+    } catch (error) {
+        res.status(400).json({
+            error: error.message
+        });
+    }
+});
+
+app.post("/create-intermediate-json", (req, res) => {
+    try {
+        const intermediate = createIntermediateJSON(req.body.parsed);
+        res.json(intermediate);
+    } catch (error) {
+        res.status(400).json({
+            error: error.message
+        });
+    }
+});
+
+app.post("/create-fodp", (req, res) => {
+    try {
+        const fodpOutput = createFodpMain(req.body.intermediate);
+        res.json(fodpOutput);
+    } catch (error) {
+        res.status(400).json({
+            error: error.message
+        });
+    }
+});
+
+app.post("/create-slides-format", (req, res) => {
+    try {
+        const slideOutput = createSlidesFormat(req.body.intermediate, req.body.presentationId);
+        res.json(slideOutput);
     } catch (error) {
         res.status(400).json({
             error: error.message

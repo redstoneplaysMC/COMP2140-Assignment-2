@@ -17,3 +17,6 @@ If you are developing a production application, we recommend using TypeScript wi
 
 
 use npm start dev to run both concurrently.
+
+The frontend runs on the client's machine, and the backend runs on the server. For this assignment the frontend
+and the backend are just run on the same machine. I may ask a tutor about this later.
