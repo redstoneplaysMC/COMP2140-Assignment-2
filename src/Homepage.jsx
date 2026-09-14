@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import CreatePresentationPopup from "./createPopups";
+import CreatePresentationPopup from "./createPresentationPopup";
+import MessagePopup from "./MessagePopup";
 
 const RESTAPI_LINK = import.meta.env.VITE_RESTAPI_LINK;
 const RESTAPI_ACCESS_TOKEN = import.meta.env.VITE_RESTAPI_ACCESS_TOKEN;
@@ -10,6 +11,7 @@ export default function Homepage() {
     const [query, setQuery] = useState("");
     const [presentations, setPresentations] = useState([]);
     const [showPopup, setShowPopup] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState(null);
     const [newPresentation, setNewPresentation] = useState({
         title: "",
         description: "",
@@ -75,24 +77,83 @@ export default function Homepage() {
         await getPresentations();
     }
 
-    async function deletePresentation(id) {
-        const response = await fetch(
-            `${RESTAPI_LINK}/presentation/${id}`,
-            {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${RESTAPI_ACCESS_TOKEN}`
+    const deletePresentation = async (presentation) => {
+        try {
+            const baseURL = import.meta.env.VITE_RESTAPI_LINK;
+            const headers = {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
+            };
+
+            // Get all slides
+            const slideResponse = await fetch(`${baseURL}/slide`, {
+                method: "GET",
+                headers
+            });
+
+            if (!slideResponse.ok) {
+                throw new Error("Failed to retrieve slides");
+            }
+
+            const slideResult = await slideResponse.json();
+            console.log(`Slides for presentation ${presentation.presentation_id}:`, slideResult.data);
+            // Delete slides belonging to this presentation
+            for (const slide of slideResult.data) {
+                if (Number(slide.presentation_id) === Number(presentation.presentation_id)) {
+                    console.log("Deleting slide:", slide);
+
+                    const deleteResponse = await fetch(
+                        `${baseURL}/slide/${slide.id}`,
+                        {
+                            method: "DELETE",
+                            headers
+                        }
+                    );
+
+                    const deleteText = await deleteResponse.text();
+
+                    console.log(
+                        `DELETE ${slide.id}:`,
+                        deleteResponse.status,
+                        deleteText
+                    );
+
+                    if (!deleteResponse.ok) {
+                        throw new Error(
+                            `Failed to delete slide ${slide.id}: ${deleteResponse.status} ${deleteText}`
+                        );
+                    }
                 }
             }
-        );
 
-        if (!response.ok) {
-            console.log("could not delete presentation.");
-            return;
+            // Delete presentation
+            const presentationResponse = await fetch(
+                `${baseURL}/presentation/${presentation.id}`,
+                {
+                    method: "DELETE",
+                    headers
+                }
+            );
+
+            if (!presentationResponse.ok) {
+                throw new Error(
+                    `Failed to delete presentation: ${presentationResponse.status}`
+                );
+            }
+
+            setPresentations(prev =>
+                prev.filter(
+                    p => Number(p.presentation_id) !== Number(presentation.id)
+                )
+            );
+
+            setDeleteMessage("Presentation and slides deleted successfully");
+            await getPresentations();
+        } catch (error) {
+            console.error("Delete failed:", error);
+            setDeleteMessage("Delete failed");
         }
-
-        await getPresentations();
-    }
+    };
 
     useEffect(() => { // useEffect uses the function at the specified location; calls at the initialization
         getPresentations();
@@ -155,7 +216,7 @@ export default function Homepage() {
                                             Edit
                                         </button>
                                         <button className="btn btn-danger btn-sm ms-2"
-                                            onClick={() => deletePresentation(presentation.id)}
+                                            onClick={() => deletePresentation(presentation)}
                                         >
                                             Delete
                                         </button>
@@ -179,6 +240,12 @@ export default function Homepage() {
                                 await makePresentation(presentation);
                                 setShowPopup(false);
                             }}
+                        />
+                    )}
+                    {deleteMessage && (
+                        <MessagePopup
+                            message={deleteMessage}
+                            onClose={() => setDeleteMessage(null)}
                         />
                     )}
                 </div>

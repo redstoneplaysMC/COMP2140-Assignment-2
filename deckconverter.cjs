@@ -132,7 +132,7 @@ function createIntermediateJSON(parsed) {
             name: null,
             layout: "",
             blocks: [],
-            slide_index: 0,
+            slide_id: 0,
             isPollType: false
         };
     }
@@ -161,7 +161,6 @@ function createIntermediateJSON(parsed) {
                         break; 
                     case "poll":
                         currentSlide.isPollType = true
-                        currentSlide.blocks.push(block);
                         break;
                 }
                 break;
@@ -196,9 +195,10 @@ function createIntermediateJSON(parsed) {
             case "separator":
                 // Separator still makes a slide even though draft was removed: fix this
                 summary.slide_count++;
+                currentSlide.slide_id = summary.slide_count;
                 summary.slides.push(currentSlide);
+            
                 currentSlide = createSlide();
-                currentSlide.slide_index = summary.slide_count;
                 break;
             }
     }
@@ -206,7 +206,7 @@ function createIntermediateJSON(parsed) {
     // Add the final slide, if not present.
     if (currentSlide.blocks.length > 0) {
         summary.slide_count++;
-        currentSlide.slide_index = summary.slide_count;
+        currentSlide.slide_id = summary.slide_count;
         summary.slides.push(currentSlide);
     }
     return summary;
@@ -395,7 +395,7 @@ function fodpListStyle(name, type, levels) {
 function fodpGetBackgroundStyleName(slide) {
     return (slide == null || slide.backgroundColor == null)
         ? "dp-default-bg"
-        : `dp-bg-${slide.slide_index}`;
+        : `dp-bg-${slide.slide_id}`;
 }
 
 /**
@@ -952,14 +952,21 @@ function writeFodpToOutput(inputPath, outputFolder, modelFlag=false){
 }
 
 // Function to convert intermediate json into the slide format.
-function createSlidesFormat(intermediateJSON, presentationId) {
-    return intermediateJSON.slides.map((slide, index) => {
+// SlideID should be generated based on the index of the slide in the intermediate JSON, starting from 1. 
+// The presentationId should be passed as an argument to this function, 
+// and will be included in each slide object.
+// The slide position should be defined here, but not SlideID.
+function createSlidesFormat(intermediate, presentationId) {
+    return intermediate.slides.map((slide, index) => {
+
+        const { slide_id, isPollType, ...slideBody } = slide;
+
         return {
-            presentation_id: presentationId,
-            body: slide,
-            slide_position: String(index + 1),
-            is_poll: false,
-            slide_id: index + 1
+            presentation_id: Number(presentationId),
+            slide_id: slide.slide_id,
+            slide_position: index + 1,
+            body: JSON.stringify(slideBody),
+            is_poll: isPollType
         };
     });
 }

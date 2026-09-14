@@ -1,7 +1,8 @@
 // import { useState } from "react";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-// import { SlidePreviewer } from "./SlidePreviewer";
+import SlidePreviewer from "./SlidePreviewer";
+import MessagePopup from "./MessagePopup"
 
 let testMarkdown = `---
 title: Riverside Library — Design Brief
@@ -126,6 +127,8 @@ export default function SlideEditor() {
     const [outputFodp, setOutputFodp] = useState(null);
     const [slidesFormat, setSlidesFormat] = useState(null);
     const [searchParams] = useSearchParams();
+    const [uploadMessage, setUploadMessage] = useState(null);
+    const [selectedSlide, setSelectedSlide] = useState(0);
     const presentationId = searchParams.get("presentationId");
 
     const parseMarkdown = async () => {
@@ -193,6 +196,59 @@ export default function SlideEditor() {
         setSlidesFormat(result);
     };
 
+    const uploadSlides = async () => {
+        try {
+            const baseURL = import.meta.env.VITE_RESTAPI_LINK;
+            const headers = {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
+            };
+
+            // Get existing slides
+            const response = await fetch(`${baseURL}/slide`, { headers });
+            const result = await response.json();
+            const existingSlides = result.data;
+            console.log("Existing slides:", existingSlides);
+
+            // Delete existing slides for this presentation
+            for (const slide of existingSlides) {
+                if (slide.presentation_id === Number(presentationId)) {
+                    await fetch(`${baseURL}/slide/${slide.id}`, {
+                        method: "DELETE",
+                        headers
+                    });
+                }
+            }
+
+            // Upload new slides
+            for (const slide of slidesFormat) {
+                const response = await fetch(`${baseURL}/slide`, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify(slide)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error("API error:", errorText);
+                    console.error("Slide sent:", slide);
+
+                    throw new Error(
+                        `Failed to upload slide ${slide.slide_id}: ${response.status}`
+                    );
+                }
+            }
+
+            setUploadMessage("Upload success: uploaded with presentation ID " + presentationId);
+
+        } catch (error) {
+            console.error(error);
+            setUploadMessage("Upload failed");
+        }
+    };
+
+    // UseEffects
+
     useEffect(() => {
         parseMarkdown();
     }, []);
@@ -224,8 +280,76 @@ export default function SlideEditor() {
             <Link to="/">
                 Back to Home
             </Link>
-            <p className="lead">Original Markdown</p>
+            <h4>Slide Preview</h4>
+            {/* <SlidePreviewer
+                slide={slidesFormat && slidesFormat.length > 0 ? slidesFormat[0] : null}
+                presentationId={presentationId}
+            /> */}
+
+
+            <div className="row">
+                {/* Slide preview */}
+                <div className="border rounded bg-light p-4">
+                    <div
+                        className="border bg-white shadow-sm mx-auto"
+                        style={{
+                            aspectRatio: "16 / 9",
+                            maxWidth: "900px",
+                            padding: "40px"
+                        }}
+                    >
+                        <SlidePreviewer
+                            slide={slidesFormat?.[selectedSlide] ?? null}
+                            presentationId={presentationId}
+                        />
+                    </div>
+                </div>
+            </div>
+            {/* Slide selector */}
+            <div className="d-flex align-items-center justify-content-center gap-2 mb-3">
+                <button
+                    className="btn btn-outline-secondary"
+                    disabled={selectedSlide === 0}
+                    onClick={() => setSelectedSlide(prev => prev - 1)}
+                >
+                    Previous
+                </button>
+
+                <input
+                    className="form-control text-center"
+                    type="number"
+                    min="1"
+                    max={slidesFormat?.length || 1}
+                    value={selectedSlide + 1}
+                    onChange={(e) => {
+                        const slideNumber = Number(e.target.value);
+
+                        if (
+                            slideNumber >= 1 &&
+                            slideNumber <= slidesFormat.length
+                        ) {
+                            setSelectedSlide(slideNumber - 1);
+                        }
+                    }}
+                    style={{ width: "80px" }}
+                />
+
+                <span> / {slidesFormat?.length || 0}</span>
+
+                <button
+                    className="btn btn-outline-secondary"
+                    disabled={
+                        selectedSlide === (slidesFormat?.length || 1) - 1
+                    }
+                    onClick={() => setSelectedSlide(prev => prev + 1)}
+                >
+                    Next
+                </button>
+            </div>
+
+
             <div className="px-4">
+                <p className="lead">Original Markdown</p>
                 <textarea
                     className="form-control"
                     value={testMarkdown}
@@ -234,8 +358,8 @@ export default function SlideEditor() {
                 />
 
             </div>
-            <p className="lead">Parsed MD</p>
-            <div className="px-4">
+            {/* <div className="px-4">
+                <p className="lead">Parsed MD</p>
                 <textarea
                     className="form-control"
                     value={parsed ? JSON.stringify(parsed, null, 2) : ""}
@@ -245,8 +369,8 @@ export default function SlideEditor() {
 
             </div>
 
-            <p className="lead">Intermediate form</p>
             <div className="px-4">
+                <p className="lead">Intermediate form</p>
                 <textarea
                     className="form-control"
                     value={intermediate ? JSON.stringify(intermediate, null, 2) : ""}
@@ -254,10 +378,10 @@ export default function SlideEditor() {
                     style={{ height: "400px" }}
                 />
 
-            </div>
+            </div> */}
 
-            <p className="lead">Slides format</p>
             <div className="px-4">
+                <p className="lead">Slides format</p>
                 <textarea
                     className="form-control"
                     value={slidesFormat ? JSON.stringify(slidesFormat, null, 2) : ""}
@@ -267,8 +391,8 @@ export default function SlideEditor() {
 
             </div>
 
-            <p className="lead">FODP format</p>
-            <div className="px-4">
+            {/* <div className="px-4">
+                <p className="lead">FODP format</p>
                 <textarea
                     className="form-control"
                     value={outputFodp || ""}
@@ -276,8 +400,30 @@ export default function SlideEditor() {
                     style={{ height: "400px" }}
                 />
 
-            </div>
+            </div> */}
 
-        </div>
+            <p className="lead">Upload Slides to API</p>
+            <button
+                onClick={
+                    () => {
+                        console.log("slidesFormat:", slidesFormat);
+                        uploadSlides();
+                    }
+                }
+                disabled={!slidesFormat || slidesFormat.length === 0}
+            >
+                {/* Later, use PUT instead of POST if the slide is already present, or just fail it */}
+                Upload Slides
+            </button>
+
+            {/* Handle the upload message popup. */}
+            {uploadMessage && (
+                <MessagePopup
+                    message={uploadMessage}
+                    onClose={() => setUploadMessage(null)}
+                />
+            )}
+
+        </div >
     );
 }

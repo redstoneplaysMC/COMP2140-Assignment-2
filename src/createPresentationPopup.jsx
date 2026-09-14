@@ -1,14 +1,15 @@
-console.log("CREATE POPUPS LOADED");
-
-function CreatePresentationPopup({
+export default function CreatePresentationPopup({
     newPresentation,
     setNewPresentation,
     onClose,
     onCreate }) {
     return (
         <div className="popup">
+            <h5 className="popup-header">Create Presentation</h5>
+
+            {/* Title + Presenter */}
             <div className="row">
-                <div className="col-md-3">
+                <div className="col-md-6 mt-3">
                     <label className="form-label">Title</label>
                     <input
                         className="form-control"
@@ -20,22 +21,10 @@ function CreatePresentationPopup({
                                 title: e.target.value
                             }))
                         }
-                    /></div>
-                <div className="col-md-3">
+                    />
+                </div>
 
-                    <label className="form-label">Description</label>
-                    <input
-                        className="form-control"
-                        type="text"
-                        value={newPresentation.description}
-                        onChange={(e) =>
-                            setNewPresentation(prev => ({
-                                ...prev,
-                                description: e.target.value
-                            }))
-                        }
-                    /> </div>
-                <div className="col-md-3">
+                <div className="col-md-6 mt-3">
                     <label className="form-label">Presenter Name</label>
                     <input
                         className="form-control"
@@ -49,8 +38,30 @@ function CreatePresentationPopup({
                         }
                     />
                 </div>
-                <div className="col-md-3 mt-3">
-                    <div className="d-flex flex-column gap-2">
+            </div>
+
+            {/* Description */}
+            <div className="row">
+                <div className="col-12 mt-3">
+                    <label className="form-label">Description</label>
+                    <textarea
+                        className="form-control"
+                        rows="5"
+                        value={newPresentation.description}
+                        onChange={(e) =>
+                            setNewPresentation(prev => ({
+                                ...prev,
+                                description: e.target.value
+                            }))
+                        }
+                    />
+                </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="row">
+                <div className="col-12 mt-3">
+                    <div className="d-flex gap-2 justify-content-center">
                         <button
                             onClick={() => {
                                 console.log("Popup newPresentation:", newPresentation);
@@ -66,8 +77,6 @@ function CreatePresentationPopup({
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 }
-
-export default CreatePresentationPopup;
