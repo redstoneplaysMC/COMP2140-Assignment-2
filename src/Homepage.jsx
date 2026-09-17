@@ -164,13 +164,13 @@ export default function Homepage() {
             <div className="mb-4">
                 <h1 className="display-4">Welcome to PresentLive!</h1>
                 <hr />
-                <p className="">
+                {/* <p className="">
                     Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
                 </p>
                 <input type='text'
                     value={query}
                     onChange={(e) => setQuery(e.target.value)} />
-                <p>Searching for: {query || "nothing yet"}</p>
+                <p>Searching for: {query || "nothing yet"}</p> */}
             </div>
             <div className="mb-4">
                 <p className="lead">Slide Deck selector</p>

@@ -19,6 +19,16 @@ xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
 office:version="1.2"
 office:mimetype="application/vnd.oasis.opendocument.presentation"`
 
+const invalidBlockFormatTemplate = {
+    "kind": "paragraph",
+    "runs": [
+        {
+          "type": "text",
+          "value": "Invalid Block format!"
+        }
+    ]
+};
+
 /**
  * Traverses a runs object to get text stored inside. 
  * 
@@ -118,6 +128,7 @@ function createAgenda(parsed){
  * Taking the parsed XML object from PresentMDParser, convert to intermediate JSON format.
 */
 function createIntermediateJSON(parsed) {
+    
     const summary = {
         title: null,
         author: null,
@@ -127,13 +138,18 @@ function createIntermediateJSON(parsed) {
         slide_count: 0,
         slides: [],
     };
+    let readingPoll = false;
+    let pollValues = [];
+
     function createSlide() { // Basic slide template
         return {
             name: null,
             layout: "",
             blocks: [],
             slide_id: 0,
-            isPollType: false
+            isPollType: false,
+            pollQuestion: null,
+            pollOptions: []
         };
     }
     function unsupportedValue(WarnText) { // Replacement for unsupported value
@@ -159,9 +175,20 @@ function createIntermediateJSON(parsed) {
                     case "layout":
                         currentSlide.layout = block.value
                         break; 
-                    case "poll":
-                        currentSlide.isPollType = true
+                    case "poll": { // Handle poll directive.
+                        {/*  Polls are in the format:
+                        {title}
+                        {question}
+                        {answer1}
+                        {answer2}
+                        {answer3}
+                        and so on, delimited by curly braces.
+                        */}
+                        readingPoll = true;
+                        pollValues = [];
+                        currentSlide.isPollType = true;
                         break;
+                    }
                 }
                 break;
 
@@ -185,7 +212,38 @@ function createIntermediateJSON(parsed) {
                 }
                 break;
 
+                // If the poll format is not exactly as specified, set isPollType to false.
             case "paragraph":
+                if (readingPoll) {
+                    const text = block.runs
+                        .map(run => run.value)
+                        .join("")
+                        .trim();
+
+                    const validFormat = /^(?:\{[^{}]*\}\s*)+$/.test(text);
+
+                    if (!validFormat) {
+                        currentSlide.isPollType = false;
+                        readingPoll = false;
+                        currentSlide.blocks.push(invalidBlockFormatTemplate);
+                        break;
+                    }
+
+                    const matches = [...text.matchAll(/\{([^{}]*)\}/g)]
+                        .map(match => match[1].trim());
+
+                    currentSlide.isPollType = true;
+                    currentSlide.name = matches[0];
+                    currentSlide.pollQuestion = matches[1];
+                    currentSlide.pollOptions = matches.slice(2);
+
+                    readingPoll = false;
+                    currentSlide.blocks.push(block);
+                    break;
+                }
+
+                currentSlide.blocks.push(block);
+                break;
             case "quote":
             case "note":
             case "list":
