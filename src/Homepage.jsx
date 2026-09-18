@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import CreatePresentationPopup from "./createPresentationPopup";
 import MessagePopup from "./MessagePopup";
 
 const RESTAPI_LINK = import.meta.env.VITE_RESTAPI_LINK;
 const RESTAPI_ACCESS_TOKEN = import.meta.env.VITE_RESTAPI_ACCESS_TOKEN;
+const baseURL = import.meta.env.VITE_RESTAPI_LINK;
+const headers = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
+};
 
 export default function Homepage() {
-
-    const [query, setQuery] = useState("");
+    // State and functions for managing presentations on the homepage.
     const [presentations, setPresentations] = useState([]);
     const [showPopup, setShowPopup] = useState(false);
     const [deleteMessage, setDeleteMessage] = useState(null);
@@ -18,10 +22,13 @@ export default function Homepage() {
         presenter_name: "",
         published_status: false
     });
+
+    // Navigation hook for redirecting to different routes.
     const navigate = useNavigate();
 
+    // Function to get the next available presentation ID; 
+    // this is required to have unique IDs for new presentations.
     function getNextPresentationId() {
-        // Function to get the next presentation ID.
         const usedIds = new Set(
             presentations.map(presentation => presentation.presentation_id)
         );
@@ -30,8 +37,10 @@ export default function Homepage() {
         return id;
     }
 
-    async function getPresentations() { // Due to being an async function, you cannot put this inside return
-        // This is essentially a promise: run await to get the result: but that only works inside another async.
+    // Due to being an async function, you cannot put this inside return
+    // This is essentially a promise: run await to get the result: but that only works inside another async.
+    // Get the list of presentation objects from the API.
+    async function getPresentations() {
         const response = await fetch(
             `${RESTAPI_LINK}/presentation`,
             {
@@ -47,9 +56,9 @@ export default function Homepage() {
         setPresentations(result.data);
     }
 
+    // Function to create a new presentation by sending a POST request to the API.
     async function makePresentation(newPresentation) {
         const presentationID = getNextPresentationId();
-
         const response = await fetch(
             `${RESTAPI_LINK}/presentation`,
             {
@@ -77,14 +86,9 @@ export default function Homepage() {
         await getPresentations();
     }
 
+    // Function to delete a presentation and its associated slides from the API.
     const deletePresentation = async (presentation) => {
         try {
-            const baseURL = import.meta.env.VITE_RESTAPI_LINK;
-            const headers = {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
-            };
-
             // Get all slides
             const slideResponse = await fetch(`${baseURL}/slide`, {
                 method: "GET",
@@ -125,6 +129,85 @@ export default function Homepage() {
                     }
                 }
             }
+
+            // Delete all attendees and pollResponses relevant to this presentation.
+            const attendeeResponse = await fetch(`${baseURL}/attendee`, {
+                method: "GET",
+                headers
+            });
+
+            if (!attendeeResponse.ok) {
+                throw new Error("Failed to retrieve attendees");
+            }
+
+            const attendeeResult = await attendeeResponse.json();
+            for (const attendee of attendeeResult.data) {
+                if (Number(attendee.presentation_id) === Number(presentation.presentation_id)) {
+                    console.log("Deleting attendee:", attendee);
+
+                    const deleteResponse = await fetch(
+                        `${baseURL}/attendee/${attendee.id}`,
+                        {
+                            method: "DELETE",
+                            headers
+                        }
+                    );
+
+                    const deleteText = await deleteResponse.text();
+
+                    console.log(
+                        `DELETE ${attendee.id}:`,
+                        deleteResponse.status,
+                        deleteText
+                    );
+
+                    if (!deleteResponse.ok) {
+                        throw new Error(
+                            `Failed to delete slide ${slide.id}: ${deleteResponse.status} ${deleteText}`
+                        );
+                    }
+                }
+            }
+
+            // Delete all attendees and pollResponses relevant to this presentation.
+            const pollResponse = await fetch(`${baseURL}/attendee`, {
+                method: "GET",
+                headers
+            });
+
+            if (!pollResponse.ok) {
+                throw new Error("Failed to retrieve attendees");
+            }
+
+            const pollResult = await pollResponse.json();
+            for (const poll of pollResult.data) {
+                if (Number(poll.presentation_id) === Number(presentation.presentation_id)) {
+                    console.log("Deleting poll response:", poll);
+
+                    const deleteResponse = await fetch(
+                        `${baseURL}/poll-response/${poll.id}`,
+                        {
+                            method: "DELETE",
+                            headers
+                        }
+                    );
+
+                    const deleteText = await deleteResponse.text();
+
+                    console.log(
+                        `DELETE ${poll.id}:`,
+                        deleteResponse.status,
+                        deleteText
+                    );
+
+                    if (!deleteResponse.ok) {
+                        throw new Error(
+                            `Failed to delete poll response ${poll.id}: ${deleteResponse.status} ${deleteText}`
+                        );
+                    }
+                }
+            }
+
 
             // Delete presentation
             const presentationResponse = await fetch(
@@ -216,7 +299,13 @@ export default function Homepage() {
                                             Edit
                                         </button>
                                         <button className="btn btn-danger btn-sm ms-2"
-                                            onClick={() => deletePresentation(presentation)}
+                                            onClick={() => {
+                                                if (window.confirm(
+                                                    "Are you sure you want to delete this presentation? This action cannot be undone."
+                                                )) {
+                                                    deletePresentation(presentation);
+                                                }
+                                            }}
                                         >
                                             Delete
                                         </button>

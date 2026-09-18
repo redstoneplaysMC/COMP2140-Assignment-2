@@ -4,165 +4,69 @@ import { Link, useSearchParams } from "react-router-dom";
 import SlidePreviewer from "./SlidePreviewer";
 import MessagePopup from "./MessagePopup"
 import SlideSelector from "./SlideSelector";
-
-let testMarkdown = `---
-title: Riverside Library — Design Brief
-author: A. Student
----
-
-# Riverside Library
-
-A design brief for the reading floors, the entrance and the garden.
-
-^ Every block kind in the language appears in this deck, and nothing else does.
-
----
-
-## Headings are formatting
-
-A heading may appear anywhere on a slide, any number of times, and none of
-them opens or titles anything.
-
-### A smaller heading, mid-slide
-
-Body text continues underneath it, in the same slide.
-
-## A second heading at the top level
-
-The first heading on the slide took the title. This one is body content,
-because a slide has one title and the rest is what is on it.
-
----
-
-## Paragraphs
-
-Consecutive non-blank lines
-form a single paragraph, joined
-with a space between them.
-
-A blank line ends it and starts another.
-
----
-
-## Bullet lists
-
-- The ground floor holds the collection
-  - Reference along the north wall
-  - Lending along the south
-    - Large print at the near end
-- The first floor holds study space
-- The garden level holds the café
-
----
-
-## Numbered lists
-
-1. Survey the existing structure
-2. Agree the floor plan
-3. Order the shelving
-4. Fit out and hand over
-
----
-
-## Quotes
-
-> A library is not a warehouse for books. It is a room in which a town keeps
-> its attention.
-
-The quote above is content on the slide, not a note about it.
-
----
-
-## Inline formatting
-
-Plain text, **bold**, _italic_, and ~~struck through~~.
-
-Runs nest in any combination: **bold with _italic_ inside**, and
-~~struck text carrying **bold**~~ as well.
-
-- A list item with **bold** in it
-- One using the other markers: __bold__ and *italic*
-
----
-
-## Nesting
-
-Runs nest inside list items, and lists nest inside list items.
-
-1. Survey the structure
-   - **North** wall first
-   - Then the ~~south~~ *garden* elevation
-2. Agree the plan
-
-A nested list keeps its own markers, so this one is numbered inside bullets.
-
-- Order the shelving
-  1. Confirm the supplier
-  2. Agree the delivery window
-- Fit out and hand over
-
----
-
-## Speaker notes
-
-^ A note before the visible content.
-
-The slide shows this paragraph and nothing else.
-
-^ Notes may sit anywhere on the slide.
-^ Each note line becomes its own paragraph in the notes pane.
-
----
-
-A slide needs no heading. This one is a single paragraph, and it is legal.
-
----
-<!-- poll: true-->
-abcd
-`
+import testMarkdown from "../test_data/testMarkdown.md?raw";
 
 const defaultPollMarkdown = `<!--poll-->
 {title}
 {question}
 {option1}
 {option2}
-{option3}`
-
-let pollTestMarkdown = `Hello! Please answer the following poll on the next slide:
----
-<!--poll-->
-{title}
-{question}
-{option1}
-{option2}
 {option3}
----
-Thank you for answering!`
+---`
+
+// Base URL for the REST API and headers for authentication
+const baseURL = import.meta.env.VITE_RESTAPI_LINK;
+const headers = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
+};
+// Local server URL for parsing markdown
+// if the server doesnt exist then the parsing functionality will not work.
+const serverURL = "http://localhost:3000";
 
 export default function SlideEditor() {
-    const baseURL = import.meta.env.VITE_RESTAPI_LINK;
-    const [slidesFormat, setSlidesFormat] = useState(null);
+    // Define state variables and other constants
     const [uploadMessage, setUploadMessage] = useState(null);
-    const [selectedSlide, setSelectedSlide] = useState(0);
-    const [markdownInput, setMarkdownInput] = useState(pollTestMarkdown);
+    const [error, setError] = useState(null);
+
+    const [markdownInput, setMarkdownInput] = useState("");
     const [currentMarkdown, setCurrentMarkdown] = useState(markdownInput);
     const [parsed, setParsed] = useState(null);
     const [intermediate, setIntermediate] = useState(null);
+    const [slidesFormat, setSlidesFormat] = useState(null);
+    const [selectedSlide, setSelectedSlide] = useState(0);
     const [outputFodp, setOutputFodp] = useState(null);
     const [searchParams] = useSearchParams();
     const presentationId = searchParams.get("presentationId");
     const [convertRequested, setConvertRequested] = useState(false);
-    const convertMarkdown = () => {
-        setCurrentMarkdown(markdownInput);
-        setConvertRequested(true);
-    };
     const [presentation, setPresentation] = useState(null);
+    const [showParsedDebugEditor, setShowParsedDebugEditor] = useState(false);
+    const [showIntermediateEditor, setShowIntermediateEditor] = useState(false);
+    const [showSlideFormatEditor, setShowSlideFormatEditor] = useState(false);
+    const [publishedStatus, setPublishedStatus] = useState(false);
 
-    const headers = {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
+    // Function to trigger markdown conversion
+    const convertMarkdown = () => {
+        try {
+            setCurrentMarkdown(markdownInput);
+            setUploadMessage("Markdown converted to slide format.");
+            setConvertRequested(true);
+
+        } catch (error) {
+            console.error("Error converting markdown:", error);
+            setUploadMessage("Failed to convert markdown.");
+            setError("Unable to connect to the Markdown conversion server. Please make sure the server is running.");
+        }
     };
 
+    // Function to add a poll template to the markdown input
+    const addPollTemplate = () => {
+        setMarkdownInput(markdownInput + "\n" + defaultPollMarkdown);
+    };
+
+    // Function to fetch the presentation data from the REST API. 
+    // The presentation ID is obtained from the URL search parameters, 
+    // which sets the presentation variable.
     const fetchPresentation = async () => {
         const response = await fetch(`${baseURL}/presentation`, {
             method: "GET",
@@ -177,7 +81,6 @@ export default function SlideEditor() {
 
         const presentationsResponse = await response.json();
         const presentations = presentationsResponse.data;
-        // console.log("Presentations: " + JSON.stringify(presentations))
         const foundPresentation = presentations.find(
             presentation =>
                 Number(presentation.presentation_id) === Number(presentationId)
@@ -190,68 +93,67 @@ export default function SlideEditor() {
         }
 
         setPresentation(foundPresentation);
-        setMarkdownInput(foundPresentation.original_markdown || "");
 
+        setPublishedStatus(foundPresentation.published_status || false);
+        setMarkdownInput(foundPresentation.original_markdown || "");
         return {
             presentation: foundPresentation,
         };
     };
 
-    const parseMarkdown = async () => {
-        const response = await fetch("http://localhost:3000/parse-md", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                markdown: currentMarkdown
-            })
-        });
+    // Fetch from the local server to parse markdown from md to JSON-like format.
+    const parseMarkdown = async (markdown) => {
+        try {
+            const response = await fetch(`${serverURL}/parse-md`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ markdown })
+            });
 
-        const result = await response.json();
+            if (!response.ok) {
+                throw new Error(`Markdown parsing failed: ${response.status}`);
+            }
 
-        setParsed(result);
+            const result = await response.json();
+            setParsed(result);
+            return result;
+
+        } catch (error) {
+            console.error("Failed to parse markdown:", error);
+            setError("Unable to connect to the Markdown conversion server.");
+            return null;
+        }
     };
 
-    const generateIntermediate = async () => {
-        const response = await fetch("http://localhost:3000/create-intermediate-json", {
+    // Function to generate the intermediate JSON-like format from the parsed markdown.
+    const generateIntermediate = async (parsed) => {
+        const response = await fetch(`${serverURL}/create-intermediate-json`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                parsed: parsed
-            })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ parsed: parsed })
         });
 
         const result = await response.json();
         console.log(result);
         setIntermediate(result);
+        return result;
     };
 
     const generateFodp = async () => {
-        const response = await fetch("http://localhost:3000/create-fodp", {
+        const response = await fetch(`${serverURL}/create-fodp`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                intermediate: intermediate
-            })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ intermediate: intermediate })
         });
-
         const result = await response.json();
-        // console.log(result);
         setOutputFodp(result);
         return result;
     };
 
     const generateSlidesFormat = async () => {
-        const response = await fetch("http://localhost:3000/create-slides-format", {
+        const response = await fetch(`${serverURL}/create-slides-format`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 intermediate: intermediate,
                 presentationId: presentationId
@@ -261,68 +163,48 @@ export default function SlideEditor() {
         const result = await response.json();
         console.log(result);
         setSlidesFormat(result);
+        return result;
     };
 
+    // Function to load slides for the current presentation; slides only
     const loadSlides = async () => {
         console.log("Loading slides for presentation ID:", presentationId);
-
         try {
-            // Get the slides
+            // Get the slides from the REST API
             const slidesResponse = await fetch(
                 `${import.meta.env.VITE_RESTAPI_LINK}/slide`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
-                    }
-                }
+                { headers: { Authorization: `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}` } }
             );
-
             if (!slidesResponse.ok) {
                 throw new Error(
                     `Slides GET failed: ${slidesResponse.status}`
                 );
             }
-
             const slides = await slidesResponse.json();
-
-            console.log("All slides:", slides.data);
-
-            // Only keep slides belonging to this presentation
+            // Only show slides belonging to this presentation
             const presentationSlides = slides.data
                 .filter(slide => slide.presentation_id === Number(presentationId))
                 .sort((a, b) => a.slide_position - b.slide_position);
-
             console.log("Slides for presentation:", presentationSlides);
-
             setSlidesFormat(presentationSlides);
-            // setMarkdownInput(presentation.original_markdown);
             setUploadMessage("Loaded slides for presentation ID " + presentationId);
+            console.log("published? " + publishedStatus);
+
         } catch (error) {
             console.error("Failed to load slides:", error);
             setUploadMessage("Failed to load slides for presentation ID " + presentationId);
         }
     };
 
+    // Function to upload slides in the current presentation to the REST API
     const uploadSlides = async () => {
-
         try {
-            // Get existing slides
-            const response = await fetch(`${baseURL}/slide`, { headers });
-            const result = await response.json();
-            const existingSlides = result.data;
-            console.log("Existing slides:", existingSlides);
-
-            // Delete existing slides for this presentation
-            for (const slide of existingSlides) {
-                if (slide.presentation_id === Number(presentationId)) {
-                    await fetch(`${baseURL}/slide/${slide.id}`, {
-                        method: "DELETE",
-                        headers
-                    });
-                }
+            // Update presentation with the current markdown; use patch to soft update instead of deleting and recreating the presentation
+            if (publishedStatus) {
+                console.error("Cannot edit a published presentation.");
+                throw new Error("Cannot edit a published presentation.");
             }
 
-            // Update presentation with the current markdown
             const presentationResponse = await fetch(
                 `${baseURL}/presentation/${presentation.id}`,
                 {
@@ -337,39 +219,62 @@ export default function SlideEditor() {
             if (!presentationResponse.ok) {
                 const errorText = await presentationResponse.text();
                 console.error("Presentation API error:", errorText);
-
                 throw new Error(
                     `Failed to update presentation: ${presentationResponse.status}`
                 );
             }
+
+            // Get existing slides with matching presentation ID
+            const response = await fetch(`${baseURL}/slide`, { headers });
+            const result = await response.json();
+            const existingSlides = result.data;
+            console.log("Existing slides:", existingSlides);
+
+            // Delete existing slides for this presentation, with matching presentationID (overwrite)
+            // Use Promise.all to delete all existing slides for this presentation concurrently 
+            // and only proceed once all deletions are complete
+            await Promise.all(
+                existingSlides
+                    .filter(slide => slide.presentation_id === Number(presentationId))
+                    .map(slide =>
+                        fetch(`${baseURL}/slide/${slide.id}`, {
+                            method: "DELETE",
+                            headers
+                        })
+                    )
+            );
+
+            // Upload new slides for this presentation:
+            // Use Promise.all to upload all new slides for this presentation concurrently,
+            // like the deletion step above
+            console.log("Uploading slides:", slidesFormat);
+            await Promise.all(
+                slidesFormat.map(slide => {
+                    const {
+                        id,
+                        created_at,
+                        updated_at,
+                        ...slideData
+                    } = slide;
+
+                    return fetch(`${baseURL}/slide`, {
+                        method: "POST",
+                        headers,
+                        body: JSON.stringify(slideData)
+                    }).then(slideResponse => {
+                        if (!slideResponse.ok) {
+                            return slideResponse.text().then(errorText => {
+                                console.error("Slide API error:", errorText);
+                                console.error("Slide sent:", slideData);
+                                throw new Error(
+                                    `Failed to upload slide ${slide.slide_id}: ${slideResponse.status}`
+                                );
+                            });
+                        }
+                    });
+                })
+            );
             setUploadMessage("Upload success: uploaded with presentation ID " + presentationId);
-
-            // Upload new slides
-            for (const slide of slidesFormat) {
-                const {
-                    id,
-                    created_at,
-                    updated_at,
-                    ...slideData
-                } = slide;
-
-                const slideResponse = await fetch(`${baseURL}/slide`, {
-                    method: "POST",
-                    headers,
-                    body: JSON.stringify(slideData)
-                });
-
-                if (!slideResponse.ok) {
-                    const errorText = await slideResponse.text();
-
-                    console.error("Slide API error:", errorText);
-                    console.error("Slide sent:", slideData);
-
-                    throw new Error(
-                        `Failed to upload slide ${slide.slide_id}: ${slideResponse.status}`
-                    );
-                }
-            }
 
         } catch (error) {
             console.error(error);
@@ -377,18 +282,50 @@ export default function SlideEditor() {
         }
     };
 
+    const publishPresentation = async () => {
+        try {
+            const response = await fetch(
+                `${baseURL}/presentation/${presentation.id}`,
+                {
+                    method: "PATCH",
+                    headers,
+                    body: JSON.stringify({
+                        published_status: true
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Presentation API error:", errorText);
+                throw new Error(
+                    `Failed to publish presentation: ${response.status}`
+                );
+            }
+            setPublishedStatus(true);
+            setUploadMessage("Presentation published successfully");
+        } catch (error) {
+            console.error(error);
+            setUploadMessage("Failed to publish presentation");
+        }
+    };
+
+    // Effect to handle markdown conversion and slide generation
     useEffect(() => {
         if (convertRequested) {
             parseMarkdown(currentMarkdown);
         }
     }, [convertRequested, currentMarkdown]);
 
+    // Effect to handle intermediate slide generation after parsing
     useEffect(() => {
         if (convertRequested && parsed) {
             generateIntermediate(parsed);
         }
     }, [convertRequested, parsed]);
 
+    // Effect to handle final slide generation after intermediate slides are ready, and to 
+    // make a FODP format in case that is required (from assignment 1)
     useEffect(() => {
         if (convertRequested && intermediate) {
             generateFodp(intermediate);
@@ -396,39 +333,40 @@ export default function SlideEditor() {
         }
     }, [convertRequested, intermediate]);
 
-
-
-    // UseEffects: run whenever this function is called, 
-    // and when the dependencies change. The dependencies are the second argument to useEffect, in an array.
-
-    // useEffect(() => {
-    //     parseMarkdown(currentMarkdown);
-    // }, [currentMarkdown]);
-
-    // useEffect(() => {
-    //     if (parsed) {
-    //         generateIntermediate(parsed);
-    //     }
-    // }, [parsed]);
-
-    // useEffect(() => {
-    //     if (intermediate) {
-    //         generateFodp(intermediate);
-    //         generateSlidesFormat(intermediate);
-    //     }
-    // }, [intermediate]);
-
-    useEffect(() => {
-        loadSlides();
-    }, [presentationId]);
-
+    // Effect to fetch the presentation details when the component mounts
     useEffect(() => {
         fetchPresentation();
     }, []);
 
+    // Effect to load slides whenever the presentation ID changes
+    useEffect(() => {
+        const initialise = async () => {
+            const result = await fetchPresentation();
+            const presentation = result.presentation;
+
+            await loadSlides(presentation);
+
+            console.log("Published status:", presentation.published_status);
+
+            if (presentation.published_status) {
+                const parsedResult = await parseMarkdown(presentation.original_markdown);
+                await generateIntermediate(parsedResult);
+            }
+        };
+
+        initialise();
+    }, [presentationId]);
+
     return (
         <div className="mb-4">
             <h1>PresentLive Slide Editor</h1>
+            <hr />
+            <p>Editing slides for presentation: {" "}
+                <span className="text-primary">
+                    {presentation?.title ?? "Loading..."}
+                </span>
+            </p>
+
             <Link to="/">
                 Back to Home
             </Link>
@@ -459,75 +397,145 @@ export default function SlideEditor() {
                     </div>
                 </div>
             </div>
-            <button
-                className="btn btn-secondary"
-                onClick={loadSlides}
-            >
-                Load from API
-            </button>
+            <hr />
             <div className="px-4">
-                <p className="lead">Original Markdown</p>
+                <p className="lead">
+                    {publishedStatus ? "Markdown (Published)" : "Markdown Editor"}
+                </p>
 
                 <textarea
                     className="form-control"
                     value={markdownInput}
                     onChange={(e) => setMarkdownInput(e.target.value)}
+                    readOnly={publishedStatus}
                     style={{ height: "400px" }}
                 />
 
+                {/* Editor control buttons */}
                 <button
-                    className="btn btn-primary mt-2"
-                    onClick={convertMarkdown}
+                    className="btn btn-primary mt-3 mx-2"
+                    onClick={
+                        () => {
+                            console.log("Converting markdown to slide format...");
+                            convertMarkdown();
+                        }
+                    }
+                    disabled={publishedStatus}
                 >
-                    Convert to Preview
+                    Convert Markdown to slides
                 </button>
+                <button
+                    className="btn btn-primary mt-3 mx-2"
+                    onClick={
+                        () => {
+                            console.log("Adding poll template...");
+                            addPollTemplate();
+                        }
+                    }
+                    disabled={publishedStatus}
+                >
+                    Add Poll
+                </button>
+                <button
+                    className="btn btn-primary mt-3 mx-2"
+                    onClick={loadSlides}
+                >
+                    Load Slides from API
+                </button>
+                <button
+                    className="btn btn-primary mt-3 mx-2"
+                    onClick={
+                        () => {
+                            console.log("slidesFormat:", slidesFormat);
+                            uploadSlides();
+                        }
+                    }
+                    disabled={publishedStatus || !slidesFormat || slidesFormat.length === 0}
+                >
+                    {/* Later, use PUT instead of POST if the slide is already present, or just fail it */}
+                    Save slides to API
+                </button>
+                <button
+                    className="btn btn-warning mt-3 mx-2"
+                    onClick={() => {
+                        if (window.confirm(
+                            "Are you sure you want to publish this presentation? You will no longer be able to edit it."
+                        )) {
+                            publishPresentation();
+                        }
+                    }}
+                    disabled={publishedStatus}
+                >
+                    Publish Presentation
+                </button>
+                <div className="alert alert-secondary mt-3 mb-3">
+                    {publishedStatus
+                        ? "Presentation published. Go to Homepage -> View slides to see poll results and the presentation link."
+                        : "Presentation unpublished. Please SAVE TO API and Publish to make the presentation available to attendees."
+                    }
+                </div>
             </div>
+
+            <hr />
+
+
+            {/* Debug Editors */}
+            <p className="lead mt-4">Debug Editors</p>
+
             <div className="px-4">
-                <p className="lead">parsedMD</p>
-                <textarea
-                    className="form-control"
-                    value={parsed ? JSON.stringify(parsed, null, 2) : ""}
-                    readOnly
-                    style={{ height: "400px" }}
-                />
+                <button
+                    className="btn btn-outline-secondary w-100 mt-3"
+                    onClick={() => setShowParsedDebugEditor(!showParsedDebugEditor)}
+                >
+                    {showParsedDebugEditor ? "Hide parsedMD" : "Show parsedMD"}
+                </button>
+
+                {showParsedDebugEditor && (
+                    <textarea
+                        className="form-control mt-2"
+                        value={parsed ? JSON.stringify(parsed, null, 2) : ""}
+                        readOnly
+                        style={{ height: "400px" }}
+                    />
+                )}
             </div>
 
             {/* Display the intermediate format for debugging purposes */}
             <div className="px-4">
-                <p className="lead">Intermediate format</p>
-                <textarea
-                    className="form-control"
-                    value={intermediate ? JSON.stringify(intermediate, null, 2) : ""}
-                    readOnly
-                    style={{ height: "400px" }}
-                />
+                <button
+                    className="btn btn-outline-secondary w-100 mt-3"
+                    onClick={() => setShowIntermediateEditor(!showIntermediateEditor)}
+                >
+                    {showIntermediateEditor ? "Hide intermediate format" : "Show intermediate format"}
+                </button>
+
+                {showIntermediateEditor && (
+                    <textarea
+                        className="form-control"
+                        value={intermediate ? JSON.stringify(intermediate, null, 2) : ""}
+                        readOnly
+                        style={{ height: "400px" }}
+                    />
+                )}
 
             </div>
             {/* Display the slides format for debugging purposes */}
             <div className="px-4">
-                <p className="lead">Slides format</p>
-                <textarea
-                    className="form-control"
-                    value={slidesFormat ? JSON.stringify(slidesFormat, null, 2) : ""}
-                    readOnly
-                    style={{ height: "400px" }}
-                />
-
+                <button
+                    className="btn btn-outline-secondary w-100 mt-3"
+                    onClick={() => setShowSlideFormatEditor(!showSlideFormatEditor)}
+                >
+                    {showSlideFormatEditor ? "Hide slides format" : "Show slides format"}
+                </button>
+                {showSlideFormatEditor && (
+                    <textarea
+                        className="form-control"
+                        value={slidesFormat ? JSON.stringify(slidesFormat, null, 2) : ""}
+                        readOnly
+                        style={{ height: "400px" }}
+                    />
+                )}
             </div>
-            <button
-                className="btn btn-primary mt-3"
-                onClick={
-                    () => {
-                        console.log("slidesFormat:", slidesFormat);
-                        uploadSlides();
-                    }
-                }
-                disabled={!slidesFormat || slidesFormat.length === 0}
-            >
-                {/* Later, use PUT instead of POST if the slide is already present, or just fail it */}
-                Save slides
-            </button>
-
             {/* Handle the upload message popup. */}
             {
                 uploadMessage && (
@@ -537,6 +545,12 @@ export default function SlideEditor() {
                     />
                 )
             }
+            {/* Display error message if any */}
+            {error && (
+                <div className="alert alert-danger mt-3" role="alert">
+                    {error}
+                </div>
+            )}
         </div >
     );
 }

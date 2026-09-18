@@ -1,17 +1,20 @@
 // import { useState } from "react";
 import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import SlidePreviewer from "./SlidePreviewer";
-import SlideSelector from "./SlideSelector";
+import SlideSelectorAttendee from "./SlideSelectorAttendee";
 import MessagePopup from "./MessagePopup"
-import PollResponseViewer from "./PollResponseViewer";
 
 // TODO:
 // If published, inside of view you can get the link to open as an attendee.
 // Also track poll responses here; the responses should be fetched from poll-responses.
 // Attendees and stuff will be handled inside AttendeeViewer.jsx, which will be routed separately.
 // Will need a button to generate a link.
+// Requires an attendeeID, and the attendee is capable of viewing slides and submitting poll responses.
+// The slide must be published first.
 
+// Attendee will need to submit a displayName and an attendeeID before they can access the presentation. 
+// It is assumed that an attendee can only view one presentation.
 
 // Base URL for the REST API and headers for authentication
 const baseURL = import.meta.env.VITE_RESTAPI_LINK;
@@ -19,20 +22,79 @@ const headers = {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
 };
+
+// Slide viewer. This should only be accessible with a valid attendee ID.
+function SlideViewer({ slidesFormat, selectedSlide, setSelectedSlide, presentationId, scale }) {
+    return (<>
+        {/* <p className="small">Slide Viewer {`(Editor mode)`}</p> */}
+        <div className="row">
+            <div className="border rounded bg-light px-4 pt-4 pb-2">
+                <div
+                    className="border bg-white shadow-sm mx-auto"
+                    style={{
+                        aspectRatio: "16 / 9",
+                        maxWidth: "900px",
+                        padding: "20px",
+                        transform: `scale(${scale})`,
+                        transformOrigin: "top left"
+                    }}
+                >
+                    <SlidePreviewer
+                        slide={slidesFormat?.[selectedSlide] ?? null}
+                        presentationId={presentationId}
+                    />
+                </div>
+                <div className="py-3">
+                    <SlideSelectorAttendee
+                        selectedSlide={selectedSlide}
+                        setSelectedSlide={setSelectedSlide}
+                        slidesFormat={slidesFormat}
+                    />
+                </div>
+            </div>
+        </div>
+    </>
+    );
+}
+
+
 // Local server URL for parsing markdown
 // if the server doesnt exist then the parsing functionality will not work.
-export default function SlideEditor() {
+export default function AttendeeViewer() {
     // Define state variables and other constants
     const [uploadMessage, setUploadMessage] = useState(null);
     const [slidesFormat, setSlidesFormat] = useState(null);
     const [selectedSlide, setSelectedSlide] = useState(0);
     const [searchParams] = useSearchParams();
-    const presentationId = searchParams.get("presentationId");
     const containerRef = useRef(null);
     const [presentation, setPresentation] = useState(null);
 
     const [availableWidth, setAvailableWidth] = useState(900);
     const scale = availableWidth / 900;
+
+    const { presentationId } = useParams();
+    const attendeeId = searchParams.get("attendeeId");
+
+    console.log(presentationId); // "4"
+    console.log(attendeeId);     // "12"
+    // Function to fetch attendee IDs from the REST API. This will be used to manage attendees for the presentation.
+    const fetchAttendeeIds = async () => {
+        try {
+            const response = await fetch(`${baseURL}/attendee`, {
+                headers
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to fetch attendee IDs: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log("Fetched attendee IDs:", data.data);
+            return data.data;
+        } catch (error) {
+            console.error("Failed to load attendee IDs:", error);
+            setUploadMessage("Failed to load attendee IDs.");
+            return [];
+        }
+    };
 
     // Function to trigger markdown conversion
     // Function to fetch the presentation data from the REST API. 
@@ -101,6 +163,7 @@ export default function SlideEditor() {
     useEffect(() => {
         const initialise = async () => {
             fetchPresentation();
+            await fetchAttendeeIds();
             await loadSlides();
         };
 
@@ -138,42 +201,14 @@ export default function SlideEditor() {
                 Back to Home
             </Link>
             <hr />
-            {/* <p className="small">Slide Viewer {`(Editor mode)`}</p> */}
-            <div className="row">
-                <div className="border rounded bg-light px-4 pt-4 pb-2">
-                    <div
-                        className="border bg-white shadow-sm mx-auto"
-                        style={{
-                            aspectRatio: "16 / 9",
-                            maxWidth: "900px",
-                            padding: "20px",
-                            transform: `scale(${scale})`,
-                            transformOrigin: "top left"
-                        }}
-                    >
-                        <SlidePreviewer
-                            slide={slidesFormat?.[selectedSlide] ?? null}
-                            presentationId={presentationId}
-                        />
-                    </div>
-                    <div className="py-3">
-                        <SlideSelector
-                            selectedSlide={selectedSlide}
-                            setSelectedSlide={setSelectedSlide}
-                            slidesFormat={slidesFormat}
-                        />
-                    </div>
-                </div>
-            </div>
-            <div className="mt-4">
-                {/* if presentation exists: */}
-                {presentation && (
-                    <>
-                        {console.log("the current presentation:", presentation)}
-                        <PollResponseViewer presentation={presentation} />
-                    </>
-                )}
-            </div>
+
+            <SlideViewer
+                slidesFormat={slidesFormat}
+                selectedSlide={selectedSlide}
+                setSelectedSlide={setSelectedSlide}
+                presentationId={presentationId}
+                scale={scale}
+            />
             {/* Handle the upload message popup. */}
             {
                 uploadMessage && (

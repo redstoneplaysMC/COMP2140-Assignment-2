@@ -1,17 +1,16 @@
-// Component for selecting slides within the slide editor, with previous/next buttons and direct slide number input.
-// Intended to be used in slideEditor component, and allows for forward and backward navigation through slides.
-export default function SlideSelector({ slidesFormat, selectedSlide, setSelectedSlide }) {
+// Component for selecting slides within the slide viewer for attendees, with previous/next buttons and direct slide number input.
+
+// All polls are optional; ignoring the poll will count as no response.
+// After the final slide, there needs to be some indication that the presentation has ended.
+export default function SlideSelectorAttendee({ slidesFormat, selectedSlide, setSelectedSlide }) {
     const slideCount = slidesFormat?.length || 0;
     return (
+        // Slide selector component for attendees.
+        // Only allow the attendee to go forward; when reaching the end of the presentation, 
+        // the "Next" button will be replaced by an 'end presentation' button, closing the slide, and signaling the end of the presentation.
+        // The attendee's finished_viewing state will be updated once they reach the end of the presentation, and they will no longer be able to
+        // access the presentation with that attendee ID.
         <div className="d-flex align-items-center justify-content-center gap-2 mb-3">
-            <button
-                className="btn btn-outline-secondary"
-                disabled={selectedSlide === 0}
-                onClick={() => setSelectedSlide(prev => prev - 1)}
-            >
-                Previous
-            </button>
-
             <input
                 className="form-control text-center"
                 type="number"

@@ -7,6 +7,8 @@ import Homepage from "./Homepage";
 import ResultsPage from "./ResultsPage";
 import SlideEditor from "./SlideEditor";
 import SlideViewer from "./SlideViewer";
+import AttendeeViewer from "./AttendeeViewer";
+import AttendeeLandingPage from "./AttendeeLandingPage";
 
 function App() {
 
@@ -17,6 +19,11 @@ function App() {
         <Route path="/slide-editor" element={<SlideEditor />} />
         <Route path="/slide-viewer" element={<SlideViewer />} />
         <Route path="/results-page" element={<ResultsPage />} />
+        <Route path="/attendee-landing-page" element={<AttendeeLandingPage />} />
+        <Route
+          path="/attendee-viewer/:presentationId"
+          element={<AttendeeViewer />}
+        />
       </Routes>
     </BrowserRouter>
   )
