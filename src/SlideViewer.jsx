@@ -6,6 +6,10 @@ import SlideSelector from "./SlideSelector";
 import MessagePopup from "./MessagePopup"
 import PollResponseViewer from "./PollResponseViewer";
 
+// This is the component responsible for viewing slides of a presentation. It contains
+// the slide previewer, slide selector, and handles fetching and displaying poll responses:
+// It acts as a display for PollResponseViewer.
+
 // TODO:
 // If published, inside of view you can get the link to open as an attendee.
 // Also track poll responses here; the responses should be fetched from poll-responses.
@@ -129,11 +133,21 @@ export default function SlideEditor() {
         <div className="mb-4">
             <h1>PresentLive Slide Viewer</h1>
             <hr />
-            <p>Viewing slides and poll responses for presentation: {" "}
-                <span className="text-primary">
-                    {presentation?.title ?? "Loading..."}
-                </span>
-            </p>
+            <div>{presentation?.published_status
+                ? <p>Viewing slides and poll responses for presentation: {" "}
+                    <span className="text-primary">
+                        {presentation?.title ?? "Loading..."}
+                    </span>
+                </p>
+                : <p>Viewing unpublished slides for presentation: {" "}
+                    <span className="text-primary">
+                        {presentation?.title ?? "Loading..."}
+                    </span>
+                </p>
+
+            }
+            </div>
+
             <Link to="/">
                 Back to Home
             </Link>

@@ -3,9 +3,9 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
-
 const { parsePresentMD } = require("./presentMDparser.cjs");
 const { createIntermediateJSON, createFodpMain, createSlidesFormat } = require("./deckconverter.cjs");
+import { generateAiSlide } from "./llm_server.js";
 
 dotenv.config();
 
@@ -63,6 +63,30 @@ app.post("/create-slides-format", (req, res) => {
     }
 });
 
-app.listen(3000, () => {
-    console.log("Server running on port 3000");
+app.post("/api/generate-presentation", async (req, res) => {
+  try {
+    const topic = req.body?.topic;
+
+    if (!topic || typeof topic !== "string") {
+      return res.status(400).json({
+        error: "Topic is required",
+      });
+    }
+
+    const markdown = await generateAiSlide(topic);
+    res.json({ markdown });
+
+  } catch (err) {
+    console.error("Error generating presentation:", err);
+
+    res.status(500).json({
+      error: "Failed to generate presentation",
+    });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

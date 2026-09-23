@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import CreatePresentationPopup from "./createPresentationPopup";
 import MessagePopup from "./MessagePopup";
 
-const RESTAPI_LINK = import.meta.env.VITE_RESTAPI_LINK;
-const RESTAPI_ACCESS_TOKEN = import.meta.env.VITE_RESTAPI_ACCESS_TOKEN;
 const baseURL = import.meta.env.VITE_RESTAPI_LINK;
-const headers = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
-};
+const DELETE_MSG =
+    `Are you sure you want to delete this presentation?
+
+Deleting the presentation will also delete all associated slides, attendees and poll responses.
+
+This action cannot be undone.`;
+
 
 export default function Homepage() {
     // State and functions for managing presentations on the homepage.
@@ -42,10 +43,10 @@ export default function Homepage() {
     // Get the list of presentation objects from the API.
     async function getPresentations() {
         const response = await fetch(
-            `${RESTAPI_LINK}/presentation`,
+            `${baseURL}/presentation`,
             {
                 headers: {
-                    Authorization: `Bearer ${RESTAPI_ACCESS_TOKEN}`
+                    Authorization: `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
                 },
             });
         const result = await response.json();
@@ -60,12 +61,12 @@ export default function Homepage() {
     async function makePresentation(newPresentation) {
         const presentationID = getNextPresentationId();
         const response = await fetch(
-            `${RESTAPI_LINK}/presentation`,
+            `${baseURL}/presentation`,
             {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${RESTAPI_ACCESS_TOKEN}`
+                    Authorization: `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
                 },
                 body: JSON.stringify({
                     title: newPresentation.title,
@@ -92,7 +93,9 @@ export default function Homepage() {
             // Get all slides
             const slideResponse = await fetch(`${baseURL}/slide`, {
                 method: "GET",
-                headers
+                headers: {
+                    Authorization: `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
+                }
             });
 
             if (!slideResponse.ok) {
@@ -110,7 +113,9 @@ export default function Homepage() {
                         `${baseURL}/slide/${slide.id}`,
                         {
                             method: "DELETE",
-                            headers
+                            headers: {
+                                Authorization: `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
+                            }
                         }
                     );
 
@@ -133,7 +138,9 @@ export default function Homepage() {
             // Delete all attendees and pollResponses relevant to this presentation.
             const attendeeResponse = await fetch(`${baseURL}/attendee`, {
                 method: "GET",
-                headers
+                headers: {
+                    Authorization: `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
+                }
             });
 
             if (!attendeeResponse.ok) {
@@ -149,7 +156,9 @@ export default function Homepage() {
                         `${baseURL}/attendee/${attendee.id}`,
                         {
                             method: "DELETE",
-                            headers
+                            headers: {
+                                Authorization: `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
+                            }
                         }
                     );
 
@@ -163,16 +172,18 @@ export default function Homepage() {
 
                     if (!deleteResponse.ok) {
                         throw new Error(
-                            `Failed to delete slide ${slide.id}: ${deleteResponse.status} ${deleteText}`
+                            `Failed to delete attendee ${attendee.id}: ${deleteResponse.status} ${deleteText}`
                         );
                     }
                 }
             }
 
             // Delete all attendees and pollResponses relevant to this presentation.
-            const pollResponse = await fetch(`${baseURL}/attendee`, {
+            const pollResponse = await fetch(`${baseURL}/poll_response`, {
                 method: "GET",
-                headers
+                headers: {
+                    Authorization: `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
+                }
             });
 
             if (!pollResponse.ok) {
@@ -185,10 +196,12 @@ export default function Homepage() {
                     console.log("Deleting poll response:", poll);
 
                     const deleteResponse = await fetch(
-                        `${baseURL}/poll-response/${poll.id}`,
+                        `${baseURL}/poll_response/${poll.id}`,
                         {
                             method: "DELETE",
-                            headers
+                            headers: {
+                                Authorization: `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
+                            }
                         }
                     );
 
@@ -214,7 +227,9 @@ export default function Homepage() {
                 `${baseURL}/presentation/${presentation.id}`,
                 {
                     method: "DELETE",
-                    headers
+                    headers: {
+                        Authorization: `Bearer ${import.meta.env.VITE_RESTAPI_ACCESS_TOKEN}`
+                    }
                 }
             );
 
@@ -245,18 +260,13 @@ export default function Homepage() {
     return (
         <section className="container text-center py-5">
             <div className="mb-4">
-                <h1 className="display-4">Welcome to PresentLive!</h1>
+                <h1 className="display-4">PresentLive</h1>
+                <p className="lead">Welcome to PresentLive, the Interactive presentation platform.</p>
                 <hr />
-                {/* <p className="">
-                    Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-                </p>
-                <input type='text'
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)} />
-                <p>Searching for: {query || "nothing yet"}</p> */}
             </div>
             <div className="mb-4">
                 <p className="lead">Slide Deck selector</p>
+                <p>Select a slide deck to view or manage its details.</p>
                 <div
                     className="table-responsive"
                     style={{
@@ -300,9 +310,7 @@ export default function Homepage() {
                                         </button>
                                         <button className="btn btn-danger btn-sm ms-2"
                                             onClick={() => {
-                                                if (window.confirm(
-                                                    "Are you sure you want to delete this presentation? This action cannot be undone."
-                                                )) {
+                                                if (window.confirm(DELETE_MSG)) {
                                                     deletePresentation(presentation);
                                                 }
                                             }}
@@ -319,6 +327,7 @@ export default function Homepage() {
                         onClick={() => setShowPopup(true)}>
                         Create a new presentation
                     </button>
+                    <hr />
                     {showPopup && (
                         <CreatePresentationPopup
                             newPresentation={newPresentation}

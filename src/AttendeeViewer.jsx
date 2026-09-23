@@ -1,6 +1,6 @@
 // import { useState } from "react";
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import SlidePreviewer from "./SlidePreviewer";
 import SlideSelectorAttendee from "./SlideSelectorAttendee";
 import MessagePopup from "./MessagePopup"
@@ -24,7 +24,15 @@ const headers = {
 };
 
 // Slide viewer. This should only be accessible with a valid attendee ID.
-function SlideViewer({ slidesFormat, selectedSlide, setSelectedSlide, presentationId, scale }) {
+function SlideViewer({
+    slidesFormat,
+    selectedSlide,
+    setSelectedSlide,
+    presentationId,
+    scale,
+    onFinish,
+    attendeeId }) {
+    let completed = selectedSlide === slidesFormat?.length;
     return (<>
         {/* <p className="small">Slide Viewer {`(Editor mode)`}</p> */}
         <div className="row">
@@ -39,24 +47,33 @@ function SlideViewer({ slidesFormat, selectedSlide, setSelectedSlide, presentati
                         transformOrigin: "top left"
                     }}
                 >
+
+                    {console.log(
+                        "selectedSlide:", selectedSlide,
+                        "length:", slidesFormat?.length,
+                        "completed:", selectedSlide === slidesFormat?.length
+                    )}
                     <SlidePreviewer
                         slide={slidesFormat?.[selectedSlide] ?? null}
                         presentationId={presentationId}
+                        attendeeId={attendeeId}
+                        completed={completed}
                     />
                 </div>
+                {/* Slide navigation component */}
                 <div className="py-3">
-                    <SlideSelectorAttendee
+                    {!completed && <SlideSelectorAttendee
                         selectedSlide={selectedSlide}
                         setSelectedSlide={setSelectedSlide}
                         slidesFormat={slidesFormat}
-                    />
+                        onFinish={onFinish}
+                    />}
                 </div>
             </div>
         </div>
     </>
     );
 }
-
 
 // Local server URL for parsing markdown
 // if the server doesnt exist then the parsing functionality will not work.
@@ -68,17 +85,17 @@ export default function AttendeeViewer() {
     const [searchParams] = useSearchParams();
     const containerRef = useRef(null);
     const [presentation, setPresentation] = useState(null);
-
     const [availableWidth, setAvailableWidth] = useState(900);
     const scale = availableWidth / 900;
 
     const { presentationId } = useParams();
     const attendeeId = searchParams.get("attendeeId");
-
-    console.log(presentationId); // "4"
-    console.log(attendeeId);     // "12"
+    const [attendee, setAttendee] = useState(null);
+    const [finished, setFinished] = useState(false);
+    // console.log(presentationId); // "4"
+    // console.log(attendeeId);     // "12"
     // Function to fetch attendee IDs from the REST API. This will be used to manage attendees for the presentation.
-    const fetchAttendeeIds = async () => {
+    const fetchAttendee = async () => {
         try {
             const response = await fetch(`${baseURL}/attendee`, {
                 headers
@@ -87,12 +104,56 @@ export default function AttendeeViewer() {
                 throw new Error(`Failed to fetch attendee IDs: ${response.status}`);
             }
             const data = await response.json();
+            const selectedAttendee =
+                data.data.find(data => data.attendee_id === Number(attendeeId)) ?? null;
+            setAttendee(selectedAttendee);
             console.log("Fetched attendee IDs:", data.data);
+            console.log("Selected attendee:", selectedAttendee);
             return data.data;
         } catch (error) {
             console.error("Failed to load attendee IDs:", error);
             setUploadMessage("Failed to load attendee IDs.");
             return [];
+        }
+    };
+
+    const checkFinishedViewing = async () => {
+        if (!attendee) return false;
+        try {
+            const response = await fetch(`${baseURL}/attendee/${attendee.id}`, {
+                headers
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to fetch attendee: ${response.status}`);
+            }
+            const data = await response.json();
+            return data.finished_viewing ?? false;
+        } catch (error) {
+            console.error("Failed to check if attendee finished viewing:", error);
+            return false;
+        }
+    };
+
+    const handleFinish = async () => {
+        try {
+            const response = await fetch(`${baseURL}/attendee/${attendee.id}`, {
+                method: "PATCH",
+                headers,
+                body: JSON.stringify({
+                    finished_viewing: true
+                })
+            });
+            console.log("PATCH response:", response);
+            if (!response.ok) {
+                throw new Error("Failed to update attendee");
+            }
+            setSelectedSlide(slidesFormat.length);
+            // setUploadMessage("You have completed the presentation, and may close this page now.");
+        } catch (error) {
+            console.error("Failed to update attendee:", error);
+            setUploadMessage(
+                "Submission unsuccessful, please try again."
+            );
         }
     };
 
@@ -163,12 +224,22 @@ export default function AttendeeViewer() {
     useEffect(() => {
         const initialise = async () => {
             fetchPresentation();
-            await fetchAttendeeIds();
+            await fetchAttendee();
             await loadSlides();
         };
 
         initialise();
     }, [presentationId]);
+
+    // Effect to check if the attendee has finished viewing the presentation
+    useEffect(() => {
+        const checkFinished = async () => {
+            const hasFinished = await checkFinishedViewing();
+            setFinished(hasFinished);
+        };
+
+        checkFinished();
+    }, [attendee]);
 
     useEffect(() => {
         const updateWidth = () => {
@@ -196,19 +267,33 @@ export default function AttendeeViewer() {
                 <span className="text-primary">
                     {presentation?.title ?? "Loading..."}
                 </span>
+                <br />
+                Attendee Name: {" "}
+                <span className="text-primary">
+                    {attendee?.display_name ?? "Loading..."}
+                </span>
+                <br />
+                Attendee ID: {" "}
+                <span className="text-primary">
+                    {attendeeId ?? "Loading..."}
+                </span>
             </p>
-            <Link to="/">
-                Back to Home
-            </Link>
+            <p className="small fst-italic">Please complete the slides below.
+                You cannot go back to previous slides. </p>
+            <p className="small fst-italic">Poll results will submit to the API after clicking submit.</p>
             <hr />
-
-            <SlideViewer
-                slidesFormat={slidesFormat}
-                selectedSlide={selectedSlide}
-                setSelectedSlide={setSelectedSlide}
-                presentationId={presentationId}
-                scale={scale}
-            />
+            {console.log("This is the slidesFormat", slidesFormat ?? null)}
+            {slidesFormat && (
+                <SlideViewer
+                    slidesFormat={slidesFormat}
+                    selectedSlide={selectedSlide}
+                    setSelectedSlide={setSelectedSlide}
+                    presentationId={presentationId}
+                    scale={scale}
+                    onFinish={() => handleFinish()}
+                    attendeeId={attendeeId}
+                />
+            )}
             {/* Handle the upload message popup. */}
             {
                 uploadMessage && (
