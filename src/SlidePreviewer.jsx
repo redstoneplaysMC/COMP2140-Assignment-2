@@ -8,7 +8,9 @@ const headers = {
 
 // Component to render a normal slide (non-poll)
 function NormalSlide({ slideBody }) {
+    // Describe some functions for each of the run types
 
+    // Function to render runs within a block (e.g., strong text)
     function renderRuns(runs) {
         return runs?.map((run, index) => {
             if (run.type === "strong") {
@@ -27,6 +29,7 @@ function NormalSlide({ slideBody }) {
         });
     }
 
+    // Function to render list items recursively
     function renderListItems(items, ordered) {
         const List = ordered ? "ol" : "ul";
 
@@ -45,6 +48,7 @@ function NormalSlide({ slideBody }) {
         );
     }
 
+    // Function to render individual blocks within a slide
     function renderBlock(block, index) {
         switch (block.kind) {
 
@@ -82,9 +86,10 @@ function NormalSlide({ slideBody }) {
 
             case "note":
                 return (
-                    <p key={index}>
-                        {block.text}
-                    </p>
+                    null
+                    // <p key={index}>
+                    //     {block.text}
+                    // </p>
                 );
 
             default:
@@ -92,6 +97,7 @@ function NormalSlide({ slideBody }) {
         }
     }
 
+    // Render the slide by mapping over its blocks and using the renderBlock function for each block.
     return (
         <div>
             {slideBody.blocks?.map(renderBlock)}

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import MessagePopup from "./MessagePopup"
 
 // Allow the attendee to choose a display name, and create a unique attendeeID for this presentation.

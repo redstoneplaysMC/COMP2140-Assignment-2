@@ -359,6 +359,7 @@ export default function SlideEditor() {
     const convertMarkdown = () => {
         setCurrentMarkdown(markdownInput);
         setConvertRequested(true);
+        // setUploadMessage("Markdown conversion requested.");
     };
 
     const addPollTemplate = () => {
@@ -407,6 +408,7 @@ export default function SlideEditor() {
     };
 
 
+    // Function to parse markdown into slide format. This function should run whenever the markdown input is updated.
     const parseMarkdown = async (markdown) => {
         try {
             const response = await fetch(`${serverURL}/parse-md`, {
@@ -423,6 +425,7 @@ export default function SlideEditor() {
             }
 
             const result = await response.json();
+            // console.log("Parsed markdown result:", result);
 
             setParsed(result);
             setUploadMessage("Markdown converted to slide format.");
@@ -430,6 +433,7 @@ export default function SlideEditor() {
             return result;
 
         } catch (error) {
+            setUploadMessage("Failed to converted markdown to slide format.");
             console.error("Failed to parse markdown:", error);
             setError(
                 "Unable to connect to the Markdown conversion server."
@@ -438,7 +442,7 @@ export default function SlideEditor() {
         }
     };
 
-
+    // Function to generate intermediate JSON from parsed markdown. This function should run after the markdown has been parsed.
     const generateIntermediate = async (parsed) => {
         try {
             const response = await fetch(
@@ -455,9 +459,9 @@ export default function SlideEditor() {
             console.log(result);
 
             setIntermediate(result);
-            setUploadMessage(
-                "Intermediate JSON generated successfully."
-            );
+            // setUploadMessage(
+            //     "Intermediate JSON generated successfully."
+            // );
             setError(null);
 
             return result;
@@ -468,9 +472,9 @@ export default function SlideEditor() {
                 error
             );
 
-            setUploadMessage(
-                "Failed to generate intermediate JSON."
-            );
+            // setUploadMessage(
+            //     "Failed to generate intermediate JSON."
+            // );
 
             setError(
                 "Unable to connect to the intermediate JSON generation server."
@@ -480,7 +484,7 @@ export default function SlideEditor() {
         }
     };
 
-
+    // Function to handle the upload of slides. This function should run when the user wants to upload the generated slides.
     const handleUploadSlides = async () => {
         try {
             await uploadSlides(
@@ -490,7 +494,7 @@ export default function SlideEditor() {
                 publishedStatus,
                 presentationId
             );
-
+            console.log("Upload successful for presentation ID:", presentationId);
             setUploadMessage(
                 "Upload success: uploaded with presentation ID " +
                 presentationId
@@ -516,7 +520,7 @@ export default function SlideEditor() {
     //     return result;
     // };
 
-
+    // Function to generate slides format from intermediate JSON. This function should run after the intermediate JSON has been generated.
     const generateSlidesFormat = async () => {
         const response = await fetch(
             `${serverURL}/create-slides-format`,
@@ -531,13 +535,13 @@ export default function SlideEditor() {
         );
 
         const result = await response.json();
-
+        setUploadMessage("Slides format generated successfully.");
         setSlidesFormat(result);
 
         return result;
     };
 
-
+    // Function to load slides for the current presentation. This function should run when the user wants to view the slides.
     const loadSlides = async () => {
         console.log(
             "Loading slides for presentation ID:",
@@ -596,6 +600,7 @@ export default function SlideEditor() {
         }
     };
 
+    // Function to publish the current presentation. This function should run when the user wants to make the presentation publicly available.
     const publishPresentation = async () => {
         try {
             const response = await fetch(
@@ -635,33 +640,35 @@ export default function SlideEditor() {
         }
     };
 
-
-    useEffect(() => {
-        if (convertRequested) {
-            parseMarkdown(currentMarkdown);
-        }
-    }, [convertRequested, currentMarkdown]);
-
-
-    useEffect(() => {
-        if (convertRequested && parsed) {
-            generateIntermediate(parsed);
-        }
-    }, [convertRequested, parsed]);
-
-
-    useEffect(() => {
-        if (convertRequested && intermediate) {
-            // generateFodp(intermediate);
-            generateSlidesFormat(intermediate);
-        }
-    }, [convertRequested, intermediate]);
-
-
     useEffect(() => {
         fetchPresentation();
     }, []);
 
+    // useEffect(() => {
+    //     console.log("Markdown conversion requested.");
+    //     if (convertRequested) {
+    //         parseMarkdown(markdownInput);
+    //     }
+    // }, [convertRequested, markdownInput]);
+
+    useEffect(() => {
+        if (convertRequested && markdownInput) {
+            parseMarkdown(markdownInput);
+        }
+        setConvertRequested(false);
+    }, [convertRequested, markdownInput]);
+
+    useEffect(() => {
+        if (parsed) {
+            generateIntermediate(parsed);
+        }
+    }, [parsed]);
+
+    useEffect(() => {
+        if (intermediate) {
+            generateSlidesFormat(intermediate);
+        }
+    }, [intermediate]);
 
     useEffect(() => {
         const initialise = async () => {
@@ -775,6 +782,7 @@ export default function SlideEditor() {
                     {error}
                 </div>
             )}
+
             {showAIPopup && (
                 <CreateAISlide
                     onClose={() => setShowAIPopup(false)}
