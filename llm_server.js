@@ -29,8 +29,8 @@ const PresentationSchema = z.object({
 
 function getModel() {
   const model = new ChatOpenAI({
-  apiKey: 'sk-uq-CFB6gPtZ8RbrmhWWAXHIOLqkP2eZ6hK0',
-  model: 'gpt-4o-mini',
+  apiKey: process.env.VITE_LANGCHAIN_KEY,
+  model: process.env.VITE_OPENAI_MODEL,
   configuration: {
     baseURL: process.env.VITE_RESTAPI_LINK + '/_ai/v1',
   },
