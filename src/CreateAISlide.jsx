@@ -39,7 +39,7 @@ export default function createAISlide({
             onCreate(data.markdown);
         } catch (err) {
             console.error(err);
-            setError("Failed to generate AI content.");
+            setError("Failed to generate AI content. The server may be down.");
         } finally {
             setLoading(false);
         }
@@ -60,7 +60,7 @@ export default function createAISlide({
                         rows="5"
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
-                        placeholder="e.g. Explain the benefits of renewable energy"
+                        placeholder="Write your topic here... e.g. The impact of AI on education"
                     />
                 </div>
             </div>
